@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7-Day Meal Plan</title>
+    <style>
+        /* Basic body and container styling */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #181818;
+            color: #f4f4f4;
+        }
+
+        h1 {
+            color: #00d1b2;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            animation: slideInBottom 1.5s ease-in-out;
+        }
+
+        .meal-plan {
+            width: 60%;
+            background-color: #202225;
+            padding: 20px;
+            border-radius: 10px;
+            animation: slideInTop 1.5s ease-in-out;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .sidebar, .right-sidebar {
+            width: 18%;
+            background-color: #252526;
+            color: #d3d3d3;
+            padding: 20px;
+            border-radius: 10px;
+            animation: slideInLeft 1.5s ease-in-out;
+        }
+
+        .day {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #303136;
+            border-radius: 10px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .day:hover {
+            background-color: #00d1b2;
+            color: #181818;
+            transform: scale(1.05);
+        }
+
+        .day-header {
+            font-weight: bold;
+            color: #00d1b2;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #00d1b2;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #009b99;
+            transform: scale(1.05);
+        }
+
+        @keyframes slideInTop {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInBottom {
+            0% {
+                transform: translateY(100%);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>7-Day Meal Plan</h1>
+    <div class="container">
+        <div class="sidebar">
+            <h3>Meal Options</h3>
+            <ul>
+                <li>Breakfast Ideas</li>
+                <li>Lunch Ideas</li>
+                <li>Dinner Ideas</li>
+                <li>Healthy Snacks</li>
+            </ul>
+        </div>
+
+        <div id="meal-plan-container" class="meal-plan">
+            <h3>Generated Meal Plan</h3>
+            <!-- The meal plan days will be injected here -->
+        </div>
+
+        <div class="right-sidebar">
+            <h3>Actions</h3>
+            <button id="generate-btn">Generate Meal Plan</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generate-btn').addEventListener('click', function () {
+            const mealPlanContainer = document.getElementById('meal-plan-container');
+            mealPlanContainer.innerHTML = '<h3>Generated Meal Plan</h3>'; // Reset content
+
+            fetch('/generate_meal_plan')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert("Failed to generate content.");
+                        return;
+                    }
+                    
+                    data.meal_plan.forEach((day, index) => {
+                        const dayDiv = document.createElement('div');
+                        dayDiv.className = 'day';
+                        dayDiv.style.animationDelay = `${index * 0.1}s`;
+
+                        const dayHeader = document.createElement('div');
+                        dayHeader.className = 'day-header';
+                        dayHeader.textContent = day.day;
+                        dayDiv.appendChild(dayHeader);
+
+                        const meals = document.createElement('ul');
+                        meals.innerHTML = `
+                            <li><strong>Breakfast:</strong> ${day.breakfast}</li>
+                            <li><strong>Lunch:</strong> ${day.lunch}</li>
+                            <li><strong> Dinner:</strong> ${day.dinner}</li>
+                        `;
+
+                        dayDiv.appendChild(meals);
+                        mealPlanContainer.appendChild(dayDiv);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

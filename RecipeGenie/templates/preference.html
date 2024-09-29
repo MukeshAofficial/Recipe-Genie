@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Recipe Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #181818;
+            color: #f4f4f4;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .sidebar, .right-sidebar {
+            width: 20%;
+            background-color: #252526;
+            color: #d3d3d3;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .main-content {
+            width: 55%;
+            background-color: #202225;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        h1, h3 {
+            color: #00d1b2;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+        input[type="text"], input[type="number"], button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #00d1b2;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #009b99;
+        }
+        .right-sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .right-sidebar ul li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #202225;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Input Section -->
+    <div class="sidebar">
+        <h3>Your Recipe Preferences</h3>
+        <form id="food-preference-form">
+            <fieldset>
+                <legend>Meal Type</legend>
+                <label><input type="radio" name="meal-type" value="breakfast" required> Breakfast</label>
+                <label><input type="radio" name="meal-type" value="lunch"> Lunch</label>
+                <label><input type="radio" name="meal-type" value="dinner"> Dinner</label>
+                <label><input type="radio" name="meal-type" value="snack"> Snack</label>
+                <label><input type="radio" name="meal-type" value="brunch"> Brunch</label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Food Type</legend>
+                <label><input type="radio" name="food-type" value="vegetarian" required> Vegetarian</label>
+                <label><input type="radio" name="food-type" value="non-vegetarian"> Non-Vegetarian</label>
+                <label><input type="radio" name="food-type" value="vegan"> Vegan</label>
+                <label><input type="radio" name="food-type" value="pescatarian"> Pescatarian</label>
+                <label><input type="radio" name="food-type" value="gluten-free"> Gluten-Free</label>
+                <label><input type="radio" name="food-type" value="dairy-free"> Dairy-Free</label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Flavor Preferences</legend>
+                <label><input type="checkbox" name="flavor" value="spicy"> Spicy</label>
+                <label><input type="checkbox" name="flavor" value="sweet"> Sweet</label>
+                <label><input type="checkbox" name="flavor" value="savory"> Savory</label>
+                <label><input type="checkbox" name="flavor" value="sour"> Sour</label>
+                <label><input type="checkbox" name="flavor" value="bitter"> Bitter</label>
+                <label><input type="checkbox" name="flavor" value="umami"> Umami</label>
+                <label><input type="checkbox" name="flavor" value="tangy"> Tangy</label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Cooking Time (in minutes)</legend>
+                <input type="number" name="cooking-time" min="0" required placeholder="Enter cooking time">
+            </fieldset>
+
+            <button type="submit">Generate Recipe</button>
+        </form>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 id="recipe-title">Recipe Details</h1>
+
+        <!-- Instructions Section -->
+        <div class="instructions">
+            <h3>Instructions</h3>
+            <p id="instructions-text">Instructions will appear here...</p>
+        </div>
+    </div>
+
+    <!-- Ingredients Section -->
+    <div class="right-sidebar">
+        <h3>Ingredients</h3>
+        <ul id="ingredients-list">
+            <!-- Dynamic Ingredients Data -->
+        </ul>
+
+        <h3>Nutrition Facts</h3>
+        <ul id="nutrition-list">
+            <!-- Dynamic Nutrition Data -->
+        </ul>
+    </div>
+</div>
+
+<script>
+    document.getElementById('food-preference-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const mealType = document.querySelector('input[name="meal-type"]:checked').value;
+        const foodType = document.querySelector('input[name="food-type"]:checked').value;
+        const flavors = Array.from(document.querySelectorAll('input[name="flavor"]:checked')).map(el => el.value);
+        const cookingTime = document.querySelector('input[name="cooking-time"]').value;
+
+        const response = await fetch('/preference', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                meal_type: mealType,
+                food_type: foodType,
+                flavors: flavors,
+                cooking_time: cookingTime,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error generating recipe:', errorData.error);
+            return;
+        }
+
+        const data = await response.json();
+
+        // Populate recipe title
+        document.getElementById('recipe-title').textContent = data.name;
+
+        // Populate ingredients
+        const ingredientsList = document.getElementById('ingredients-list');
+        ingredientsList.innerHTML = ''; // Clear previous data
+        data.ingredients.forEach(item => {
+            let li = document.createElement('li');
+            li.textContent = `${item.amount} ${item.unit} ${item.name} ${item.notes ? `(${item.notes})` : ''}`; // Added notes if they exist
+            ingredientsList.appendChild(li);
+        });
+
+        // Populate instructions
+        const instructionsText = document.getElementById('instructions-text');
+        instructionsText.innerHTML = ''; // Clear previous instructions
+        data.instructions.forEach(instruction => {
+            const p = document.createElement('p');
+            p.textContent = instruction; // Add each instruction
+            instructionsText.appendChild(p);
+        });
+
+        // Populate nutrition facts
+        const nutritionList = document.getElementById('nutrition-list');
+        nutritionList.innerHTML = ''; // Clear previous data
+        Object.entries(data.nutritionFacts).forEach(([key, value]) => {
+            let li = document.createElement('li');
+            li.textContent = `${key}: ${value}`;
+            nutritionList.appendChild(li);
+        });
+    });
+</script>
+</body>
+</html>

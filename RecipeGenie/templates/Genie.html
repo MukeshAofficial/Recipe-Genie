@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Recipe Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #181818;
+            color: #f4f4f4;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            animation: slideInBottom 1.5s ease-in-out;
+        }
+
+        .sidebar, .right-sidebar {
+            width: 20%;
+            background-color: #252526;
+            color: #d3d3d3;
+            padding: 20px;
+            border-radius: 10px;
+            animation: slideInLeft 1.5s ease-in-out;
+        }
+
+        .main-content {
+            width: 55%;
+            background-color: #202225;
+            padding: 20px;
+            border-radius: 10px;
+            animation: slideInTop 1.5s ease-in-out;
+        }
+
+        h1, h3 {
+            color: #00d1b2;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+
+        .video-section iframe {
+            width: 100%;
+            height: 350px;
+            border-radius: 10px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        iframe:hover {
+            transform: scale(1.05);
+        }
+
+        input[type="text"], button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #00d1b2;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #009b99;
+        }
+
+        .right-sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .right-sidebar ul li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #202225;
+            border-radius: 8px;
+            animation: slideInRight 1.5s ease-in-out;
+        }
+
+        .right-sidebar ul li:hover {
+            background-color: #00d1b2;
+            color: #181818;
+            cursor: pointer;
+            transform: scale(1.05);
+        }
+
+        @keyframes slideInTop {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Input Section -->
+    <div class="sidebar">
+        <h3>Enter a Recipe</h3>
+        <input type="text" id="title" placeholder="Enter a food name...">
+        <button id="generate-btn">Generate Recipe</button>
+
+        <div class="nutrition">
+            <h3>Nutrition Facts</h3>
+            <ul id="nutrition-list">
+                <!-- Dynamic Nutrition Data -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content (Video, Ingredients, Instructions) -->
+    <div class="main-content">
+        <h1 id="recipe-title">Recipe Details</h1>
+
+        <!-- Video Section -->
+        <div class="video-section">
+            <iframe id="video-frame" src="" allowfullscreen></iframe>
+        </div>
+
+        <!-- Instructions Section -->
+        <div class="instructions">
+            <h3>Instructions</h3>
+            <p id="instructions-text">Instructions will appear here...</p>
+        </div>
+    </div>
+
+    <!-- Ingredients Section -->
+    <div class="right-sidebar">
+        <h3>Ingredients</h3>
+        <ul id="ingredients-list">
+            <!-- Dynamic Ingredients Data -->
+        </ul>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const generateBtn = document.getElementById('generate-btn');
+
+        generateBtn.addEventListener('click', function () {
+            const title = document.getElementById('title').value;
+
+            // Fetch data from backend using the title
+            fetch('/generate_content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Populate video
+                const videoUrl = data.video_link.replace("watch?v=", "embed/");
+                document.getElementById('video-frame').src = videoUrl;
+
+                // Populate ingredients
+                const ingredientsList = document.getElementById('ingredients-list');
+                ingredientsList.innerHTML = ''; // Clear previous data
+                data.ingredients.forEach(item => {
+                    let li = document.createElement('li');
+                    li.textContent = item;
+                    ingredientsList.appendChild(li);
+                });
+
+                // Populate nutrition facts
+                const nutritionList = document.getElementById('nutrition-list');
+                nutritionList.innerHTML = ''; // Clear previous data
+                Object.entries(data.nutrition).forEach(([key, value]) => {
+                    let li = document.createElement('li');
+                    li.textContent = `${key}: ${value}`;
+                    nutritionList.appendChild(li);
+                });
+
+                // Populate instructions
+                document.getElementById('instructions-text').textContent = data.instructions;
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
