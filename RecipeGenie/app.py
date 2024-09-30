@@ -82,6 +82,10 @@ def get_recipe(meal_id):
     else:
         return jsonify({}), 404
 
+
+@app.route('/bookmarks')
+def bookmark():
+    return render_template('bookmarks.html')
 # Endpoint to search for recipes by name
 @app.route('/search')
 def search_recipe():
